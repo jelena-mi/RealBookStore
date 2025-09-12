@@ -1,5 +1,6 @@
 package com.urosdragojevic.realbookstore.repository;
 
+import com.urosdragojevic.realbookstore.audit.AuditLogger;
 import com.urosdragojevic.realbookstore.domain.Comment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,7 @@ import java.util.List;
 public class CommentRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommentRepository.class);
-
+    private static final AuditLogger auditLogger = AuditLogger.getAuditLogger(CommentRepository.class);
 
     private DataSource dataSource;
 
@@ -32,8 +33,10 @@ public class CommentRepository {
             pstmt.setInt(2, comment.getUserId());
             pstmt.setString(3, comment.getComment());
             pstmt.execute();
+            auditLogger.audit("Posted comment: " + comment.getComment() + " for book with ID: " + comment.getBookId());
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to post comment: " + comment.getComment() + " for book with ID: " + comment.getBookId(), e);
+            auditLogger.audit("Failed to post comment: " + comment.getComment() + " for book with ID: " + comment.getBookId());
         }
     }
 
@@ -46,8 +49,10 @@ public class CommentRepository {
             while (rs.next()) {
                 commentList.add(new Comment(rs.getInt(1), rs.getInt(2), rs.getString(3)));
             }
+            auditLogger.audit("Retrieved all comments for book with ID: " + bookId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to retrieve comments for book with ID: " + bookId, e);
+            auditLogger.audit("Failed to retrieve comments for book with ID: " + bookId);
         }
         return commentList;
     }

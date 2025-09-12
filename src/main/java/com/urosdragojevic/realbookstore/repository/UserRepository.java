@@ -1,5 +1,6 @@
 package com.urosdragojevic.realbookstore.repository;
 
+import com.urosdragojevic.realbookstore.audit.AuditLogger;
 import com.urosdragojevic.realbookstore.domain.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import java.sql.Statement;
 public class UserRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserRepository.class);
+    private static final AuditLogger auditLogger = AuditLogger.getAuditLogger(PermissionRepository.class);
 
     private DataSource dataSource;
 
@@ -33,8 +35,10 @@ public class UserRepository {
                 String password = rs.getString(3);
                 return new User(id, username1, password);
             }
+            auditLogger.audit("Retrieved user with username: " + username);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to retrieve user with username: " + username, e);
+            auditLogger.audit("Failed to retrieve user with username: " + username);
         }
         return null;
     }
@@ -46,8 +50,9 @@ public class UserRepository {
              ResultSet rs = statement.executeQuery(query)) {
             return rs.next();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to validate credentials for user with username: " + username, e);
         }
+        auditLogger.audit("Validated credentials for user with username: " + username);
         return false;
     }
 
@@ -57,8 +62,10 @@ public class UserRepository {
              Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate(query);
+            auditLogger.audit("Deleted user with ID: " + userId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to delete user with ID: " + userId, e);
+            auditLogger.audit("Failed to delete user with ID: " + userId);
         }
     }
 }

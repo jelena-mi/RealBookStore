@@ -1,5 +1,6 @@
 package com.urosdragojevic.realbookstore.repository;
 
+import com.urosdragojevic.realbookstore.audit.AuditLogger;
 import com.urosdragojevic.realbookstore.domain.Rating;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,8 @@ import java.util.List;
 public class RatingRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(RatingRepository.class);
+    private static final AuditLogger auditLogger = AuditLogger.getAuditLogger(PermissionRepository.class);
+
     private DataSource dataSource;
 
     public RatingRepository(DataSource dataSource) {
@@ -35,6 +38,10 @@ public class RatingRepository {
                     preparedStatement.setInt(2, rating.getBookId());
                     preparedStatement.setInt(3, rating.getUserId());
                     preparedStatement.executeUpdate();
+                    auditLogger.audit("Updated rating for book with ID: " + rating.getBookId());
+                } catch (Exception e) {
+                    LOG.warn("Failed to update rating for book with ID: " + rating.getBookId(), e);
+                    auditLogger.audit("Failed to update rating for book with ID: " + rating.getBookId());
                 }
             } else {
                 try (PreparedStatement preparedStatement = connection.prepareStatement(query3)) {
@@ -44,8 +51,10 @@ public class RatingRepository {
                     preparedStatement.executeUpdate();
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            auditLogger.audit("Created rating for book with ID: " + rating.getBookId());
+        } catch (Exception e) {
+            LOG.warn("Failed to create rating for book with ID: " + rating.getBookId(), e);
+            auditLogger.audit("Failed to create rating for book with ID: " + rating.getBookId());
         }
     }
 
@@ -58,8 +67,10 @@ public class RatingRepository {
             while (rs.next()) {
                 ratingList.add(new Rating(rs.getInt(1), rs.getInt(2), rs.getInt(3)));
             }
+            auditLogger.audit("Retrieved all ratings");
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to retrieve all ratings", e);
+            auditLogger.audit("Failed to retrieve all ratings");
         }
         return ratingList;
     }

@@ -32,8 +32,10 @@ public class PersonRepository {
             while (rs.next()) {
                 personList.add(createPersonFromResultSet(rs));
             }
+            auditLogger.audit("Retrieved all persons");
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to retrieve all persons", e);
+            auditLogger.audit("Failed to retrieve all persons");
         }
         return personList;
     }
@@ -48,7 +50,11 @@ public class PersonRepository {
             while (rs.next()) {
                 personList.add(createPersonFromResultSet(rs));
             }
-        }
+            auditLogger.audit("Retrieved person search results for term: " + searchTerm);
+        } catch (SQLException e) {
+            LOG.warn("Failed to retrieve person search results for term: " + searchTerm, e);
+            auditLogger.audit("Failed to retrieve person search results for term: " + searchTerm);
+    }
         return personList;
     }
 
@@ -60,8 +66,10 @@ public class PersonRepository {
             while (rs.next()) {
                 return createPersonFromResultSet(rs);
             }
+            auditLogger.audit("Retrieved person with ID: " + personId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to retrieve person with ID: " + personId, e);
+            auditLogger.audit("Failed to retrieve person with ID: " + personId);
         }
 
         return null;
@@ -73,8 +81,10 @@ public class PersonRepository {
              Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate(query);
+            auditLogger.audit("Deleted person with ID: " + personId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to delete person with ID: " + personId, e);
+            auditLogger.audit("Failed to delete person with ID: " + personId);
         }
     }
 
@@ -98,8 +108,10 @@ public class PersonRepository {
             statement.setString(1, firstName);
             statement.setString(2, email);
             statement.executeUpdate();
+            auditLogger.audit("Updated person with ID: " + personUpdate.getId());
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to update person with ID: " + personUpdate.getId(), e);
+            auditLogger.audit("Failed to update person with ID: " + personUpdate.getId());
         }
     }
 }

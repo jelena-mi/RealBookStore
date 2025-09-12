@@ -35,8 +35,10 @@ public class BookRepository {
                 Book book = createBookFromResultSet(rs);
                 bookList.add(book);
             }
+            auditLogger.audit("Retrieved all books");
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to retrieve all books.", e);
+            auditLogger.audit("Failed to retrieve all books");
         }
         return bookList;
     }
@@ -54,7 +56,11 @@ public class BookRepository {
             while (rs.next()) {
                 bookList.add(createBookFromResultSet(rs));
             }
-        }
+            auditLogger.audit("Retrieved book search results for term: " + searchTerm);
+        } catch (SQLException e) {
+            LOG.warn("Failed to retrieve book search results for term: " + searchTerm, e);
+            auditLogger.audit("Failed to retrieve book search results for term: " + searchTerm);
+    }
         return bookList;
     }
 
@@ -64,10 +70,12 @@ public class BookRepository {
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(query)) {
             if (rs.next()) {
+                auditLogger.audit("Retrieved book with ID: " + bookId);
                 return createBookFromResultSet(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to retrieve book with ID: " + bookId, e);
+            auditLogger.audit("Failed to retrieve book with ID: " + bookId);
         }
         return null;
     }
@@ -94,12 +102,14 @@ public class BookRepository {
                         statement2.setInt(2, genre.getId());
                         statement2.executeUpdate();
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        LOG.error("Failed to set genre: " + genre.getId() + "for book ID: " + finalId, e);
                     }
                 });
             }
+            auditLogger.audit("Created book titled: " + book.getTitle());
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to create book titled: " + book.getTitle(), e);
+            auditLogger.audit("Failed to create book titled: " + book.getTitle());
         }
         return id;
     }
@@ -116,8 +126,10 @@ public class BookRepository {
             statement.executeUpdate(query2);
             statement.executeUpdate(query3);
             statement.executeUpdate(query4);
+            auditLogger.audit("Deleted book with ID: " + bookId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to delete book with ID: " + bookId, e);
+            auditLogger.audit("Failed to delete book with ID: " + bookId);
         }
     }
 
